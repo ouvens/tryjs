@@ -29,9 +29,9 @@ function _wrapFunction(fn) {
 <script>
 
 	// 添加常用模块化错误捕获和错误处理
-	Try.init({
+	Tryjs.init({
 		// 定义需要使用try-catch包裹的全局函数，主要的入口函数内传入的函数内容将在try-catch的包裹下运行，不传则默认可以是['__def', 'require', 'define', 'setTimeout', 'setInterval']
-		fnArray: ['__def', '__WPO','require', 'define', 'setTimeout', 'setInterval'] 
+		fnObject: ['__def', '__WPO','require', 'define', 'setTimeout', 'setInterval'] 
 		error: function(e) {
 			// 错误处理函数，即如果发现错误的方法
 		}
@@ -42,7 +42,7 @@ function _wrapFunction(fn) {
 	function fn() {
 		/// ...
 	}
-	Try.defineError(fn)();  // 将使fn函数内容被try-catch包裹运行，使用defineError(fn)();的效果与此相同
+	Tryjs.defineError(fn)();  // 将使fn函数内容被try-catch包裹运行，使用defineError(fn)();的效果与此相同
 </script>
 ```
 
@@ -53,7 +53,7 @@ function _wrapFunction(fn) {
 ```javascript
 var tryjs = require('tryjs');
 // 或者 import tryjs from 'tryjs'；
-// 或者 define(['tryjs'], function(Tryjs){Try.init()});
+// 或者 define(['tryjs'], function(Tryjs){Tryjs.init()});
 
 tryjs.init();
 

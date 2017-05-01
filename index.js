@@ -13,24 +13,24 @@
         module.exports = factory();
     } else {
         // 浏览器全局变量(root 即 window)
-        root['Try'] = factory();
+        root['Tryjs'] = factory();
     }
 })(window, function() {
 
     var _errorProcess = _reportError;
     var __WPO;
-    var Try = Try || {
+    var Tryjs = Tryjs || {
         defineError: defineError,
         report: _reportError,
         init: function(options) {
 
             // 融合全局方法定义
             var defaultFnArray = ['__def', '__WPO', 'require', 'define', 'setTimeout', 'setInterval'],
-                fnArray = options && options.fnArray || [];
+                fnObject = options && options.fnObject || [];
 
-            for(var i = 0; fnArray.length && i < fnArray.length && defaultFnArray.indexOf(fnArray[i]) < 0; i++){
+            for(var i = 0; fnObject.length && i < fnObject.length && defaultFnArray.indexOf(fnObject[i]) < 0; i++){
 
-                defaultFnArray.push(fnArray[i]);
+                defaultFnArray.push(fnObject[i]);
             }
             
             _errorProcess = options && options.error || _reportError;
@@ -40,45 +40,103 @@
     };
     /**
      * 注入错误入口封装，定义哪些注入方法可以被try...catch
-     * @param  {[type]} fnArray [函数方法数组或单个函数方法名称;当为函数方法名时，执行返回内容带try...catch的函数]
+     * @param  {[type]} fnObject [函数方法数组或单个函数方法名称;当为函数方法名时，执行返回内容带try...catch的函数]
      * @param  {[type]} scope   [当前的作用域this]
      * @return {[type]}         [返回函数]
      */
 
-    function defineError(fnArray, scope) {
+    function defineError(fnObject, scope) {
 
         var noop = function() {};
-        scope = scope || window;
 
-        if (Object.prototype.toString.call(fnArray).slice(8, -1).toLowerCase() === 'array') {
-            for (var i = 0, length = fnArray.length; i < length; i++) {
-                _wrapFunctionArray(fnArray[i], scope);
+        var type = Object.prototype.toString.call(fnObject).slice(8, -1).toLowerCase();
+        
+        if (type === 'array') {
+            for (var i = 0, length = fnObject.length; i < length; i++) {
+                fnObject[i] && _wrapFunctionArray(fnObject[i], scope);
             }
             return true;
-        } else if (typeof(fnArray) === 'string') {
-
-            return _wrapFunction(scope[fnArray]);
-
-        } else if (typeof(fnArray) === 'function') {
-            return _wrapFunction(fnArray);
+        } else if (type === 'string') {
+            return _wrapFunction(scope[fnObject]);
+        } else if (type === 'object') {
+            //  对于对象，则包裹它的方法属性，主要针对react的方法实现，需要重新定义原有方法
+            for (var key in fnObject){
+                if(typeof(fnObject[key]) === 'function'){
+                    fnObject[key] = _wrapFunction(fnObject, scope || fnObject);
+                }
+            }
+            return fnObject;
+        } else if (type === 'function' && fnObject.prototype.isReactComponent) {
+            // 可能是真正的函数或者是class, ES6的class type也是function，如果含有
+            return _defineReact(fnObject);
+        } else if(type === 'function'){
+            // 可能是真正的函数或者是class, ES6的class type也是function
+            return _wrapFunction(fnObject, scope || fnObject);
         } else {
             return noop;
         }
     }
 
+    /**
+     * 封装React方法的错误处理,改成使用入参的prototype中是否有render生命周期函数来判断
+     * @param  {[type]} Component [description]
+     * @return {[type]}           [description]
+     */
+    function _defineReact(Component){
+
+        var proto = Component.prototype;
+
+        for(var key in proto){
+            if(typeof(proto[key]) === 'function'){
+                proto[key] = _wrapFunction(proto[key]);
+            }
+        }
+
+        return Component;
+    }
+
     // 包裹单个函数作用域，将原有函数封装，形成带有try...catch包裹的函数,ES5写法
-    function _wrapFunction(fn) {
-        // ES6 的语法
-        return function() {
+    function _wrapFunction(fn, scope) {
+        // 如果fn是个函数，则直接放到try-catch中运行，否则要将类的方法包裹起来
+
+        if(!fn){
+            return function(){};
+        }
+    
+        return function(){
+            var self = this;
             try {
-                return fn.apply(this, arguments); // 将函数参数用 try...catch 包裹 
-            } catch (e) {
+                return fn.apply(this, arguments);
+            } catch(e) {
                 _errorProcess(e);
+                return ;
             }
         }
     }
 
-    // 包裹scope作用域下的属性函数
+    /**
+     * 判断是否为真实的函数，而不是class
+     * @param  {Function} fn [description]
+     * @return {Boolean}     [description]
+     */
+    function _isTrueFunction(fn) {
+
+        var isTrueFunction = false;
+
+        try{
+            isTrueFunction = fn.prototype.constructor.arguments === null;
+        }catch(e){
+            isTrueFunction = false;
+        }
+
+        for(var key in fn.prototype){
+            return isTrueFunction = false;
+        }
+
+        return isTrueFunction;
+    }
+
+    // 包裹scope作用域下的属性函数，对通用入口函数内容包裹后运行
     function _wrapFunctionArray(fnName, scope) {
 
         var _newFn = _wrapFunction(scope[fnName]) || function() {};
@@ -131,18 +189,19 @@
     }
 
     // error的错误上报
-    // window.onerror = function(msg, file, line, row, errorObj) {
+    // window.onerror = function(msg, file, row, column, errorObj) {
     //     console.log(msg); // script error.
     //     console.log(file); // 
     //     console.log(row); // 0
     //     console.log(column); // 0
     //     console.log(errorObj); // {}
-    //     setTimeout(function() {
-    //         __WPO && __WPO.error(e.name, e.message + e.stack);
-    //     }, 5000);
-    // }；
+    //     // setTimeout(function() {
+    //     //     __WPO && __WPO.error(e.name, e.message + e.stack);
+    //     // }, 5000);
+    // }
     
     window.defineError = defineError;
-    window.Try = Try;
-    return Try;
+    window.defineReact = _defineReact;
+    window.Tryjs = Tryjs;
+    return Tryjs;
 });

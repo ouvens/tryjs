@@ -1,0 +1,22 @@
+{
+  "name": "@alife/tryjs",
+  "version": "1.0.2",
+  "description": "\"try...catch捕获js运行错误\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "tnpm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.alibaba-inc.com:bc/tryjs.git"
+  },
+  "publishConfig": {
+    "registry": "http://registry.npm.alibaba-inc.com"
+  },
+  "keywords": [
+    "tryjs",
+    "jserror"
+  ],
+  "author": "chengwen.zcw",
+  "license": "ISC"
+}
