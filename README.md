@@ -66,7 +66,7 @@ tryjs.init({});
 
 &emsp;&emsp;对于React组件中函数进行包裹运行处理：
 
-```
+```javascript
 class MyComponent extends React.Component {
     render() {
         return <div>render something here</div>;
@@ -80,7 +80,7 @@ exports default defineError(MyComponent);
 
 &emsp;&emsp;对于对象或单个函数中的内容包裹运行。
 
-```
+```javascript
 function fn(){
 	// 函数中业务内容
 }
