@@ -25,6 +25,8 @@ function _wrapFunction(fn) {
 
 ```html
 <script type="://domain.com/path/loader.js"></script>
+<script type="://domain.com/path/react.js"></script>
+<script type="://domain.com/path/react-dom.js"></script>
 <script type="://domain.com/path/tryjs.js"></script>
 <script>
 
@@ -40,22 +42,60 @@ function _wrapFunction(fn) {
 	// 或者使用defineError包裹函数运行，并返回一个新的函数
 
 	function fn() {
-		/// ...
+		// 函数中业务内容
 	}
+
 	Tryjs.defineError(fn)();  // 将使fn函数内容被try-catch包裹运行，使用defineError(fn)();的效果与此相同
 </script>
 ```
 
 ###### 使用方法二：
 
-&emsp;&emsp;作为模块引入：
+&emsp;&emsp;作为模块引入，初始化默认的：
 
 ```javascript
 var tryjs = require('tryjs');
 // 或者 import tryjs from 'tryjs'；
 // 或者 define(['tryjs'], function(Tryjs){Tryjs.init()});
 
-tryjs.init();
+tryjs.init({});
+
+```
+
+##### 使用方法三：
+
+&emsp;&emsp;对于React组件中函数进行包裹运行处理：
+
+```
+class MyComponent extends React.Component {
+    render() {
+        return <div>render something here</div>;
+    }
+}
+
+exports default defineError(MyComponent);
+```
+
+##### 使用方法四：
+
+&emsp;&emsp;对于对象或单个函数中的内容包裹运行。
+
+```
+function fn(){
+	// 函数中业务内容
+}
+
+module.exports = defineError(fn)();
+
+// 或者
+
+var pageMod = {
+	init: function(){
+		// 模块中初始化函数
+	}	
+}
+
+module.exports = defindError(pageMod);
 
 ```
 

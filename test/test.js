@@ -1,71 +1,38 @@
 
-// defineError(['on'], ($ && $.fn));
-// demo
-function a(num){
-
-    var obj = {
-        init: function() {
-            
-            function getName() {
-                
-                // var a = {};
-                // console.log(a.b.M);
-                function getName() {
-                
-                    var a = {};
-                    console.log(a.b.M);
-                }
-                getName();
-            }
-            getName();
-        }
+// 普通初始化方法封装
+Tryjs.init({
+    fnObject: ['__def', '__WPO', 'require', 'define', 'setTimeout', 'setInterval'],
+    error: function() {
+        // 错误后的处理方法
     }
-
-    obj.init();
-}
-
-b = defineError(a);
-b(2);
+});
 
 
-
-//  打点性能测试
-function perfomanceFn() {
-    // 巨大的操作模块
-    var a = {
-        b: 1,
-        c: 1   　
-    };
-    var arr = [1,2,3,4,5];
-    var c = function(){
-        return a.b + a.c;
+// 对对象的封装
+var A = {
+    init: function(){
+        var a = {};
+        console.log(a.b.c);
     }
+};
 
-    for(var i =1; i< 100; i++){
-        a.b += i;
-        a.c += 2*i;
+defineError(A);
 
-        arr.map(function(item) {
-           return item * 3; 
-        });
+A.init();
 
+// 对普通函数的包裹封装
+function fn() {
+    var a = {};
+    console.log(a.b.c);
+}
+
+defineError(fn)();
+
+// 对React模块的包裹封装
+class MyComponent extends React.Component {
+    render() {
+        return <div>render something here</div>;
     }
-
-    return c();
 }
 
-
-var T1 = +new Date(), T2,T3;
-for(let i =0; i < 10000; i++){
-    defineError(perfomanceFn)();
-}
-
-T2 = +new Date();
-console.log(T2 - T1);
-
-for(let i =0; i < 10000; i++){
-    perfomanceFn();
-}
-
-T3 = +new Date();
-console.log(T3 - T2);     // 相差40-60ms，8%左右，所以这里性能问题影响不大
+exports default defineError(MyComponent);

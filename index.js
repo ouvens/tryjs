@@ -5,6 +5,7 @@
  */
 
 (function(root, factory) {
+    'use strict';
     if (typeof define === 'function' && define.amd) {
         // AMD
         define([], factory());
@@ -13,31 +14,32 @@
         module.exports = factory();
     } else {
         // 浏览器全局变量(root 即 window)
-        root['Tryjs'] = factory();
+        root.Tryjs = factory();
     }
 })(window, function() {
 
-    var _errorProcess = _reportError;
-    var __WPO;
-    var Tryjs = Tryjs || {
-        defineError: defineError,
-        report: _reportError,
-        init: function(options) {
+    var _errorProcess = _reportError,
+        __WPO,
+        Tryjs = Tryjs || {
+            defineError: defineError,
+            report: _reportError,
+            init: function(options) {
 
-            // 融合全局方法定义
-            var defaultFnArray = ['__def', '__WPO', 'require', 'define', 'setTimeout', 'setInterval'],
-                fnObject = options && options.fnObject || [];
+                // 融合全局方法定义
+                var defaultFnArray = ['__def', '__WPO', 'require', 'define', 'setTimeout', 'setInterval'],
+                    i, length,
+                    fnObject = (options && options.fnObject) || [];
 
-            for(var i = 0; fnObject.length && i < fnObject.length && defaultFnArray.indexOf(fnObject[i]) < 0; i++){
+                for (i = 0, length = fnObject.length; fnObject.length && (i < length) && (defaultFnArray.indexOf(fnObject[i]) < 0); i++) {
 
-                defaultFnArray.push(fnObject[i]);
+                    defaultFnArray.push(fnObject[i]);
+                }
+
+                _errorProcess = (options && options.error) || _reportError;
+                // 定义初始化函数方法
+                defineError(defaultFnArray, window);
             }
-            
-            _errorProcess = options && options.error || _reportError;
-            // 定义初始化函数方法
-            defineError(defaultFnArray, window);
-        }
-    };
+        };
     /**
      * 注入错误入口封装，定义哪些注入方法可以被try...catch
      * @param  {[type]} fnObject [函数方法数组或单个函数方法名称;当为函数方法名时，执行返回内容带try...catch的函数]
@@ -47,12 +49,11 @@
 
     function defineError(fnObject, scope) {
 
-        var noop = function() {};
+        var type = Object.prototype.toString.call(fnObject).slice(8, -1).toLowerCase(),
+            i, length;
 
-        var type = Object.prototype.toString.call(fnObject).slice(8, -1).toLowerCase();
-        
         if (type === 'array') {
-            for (var i = 0, length = fnObject.length; i < length; i++) {
+            for (i = 0, length = fnObject.length; i < length; i++) {
                 fnObject[i] && _wrapFunctionArray(fnObject[i], scope);
             }
             return true;
@@ -60,20 +61,22 @@
             return _wrapFunction(scope[fnObject]);
         } else if (type === 'object') {
             //  对于对象，则包裹它的方法属性，主要针对react的方法实现，需要重新定义原有方法
-            for (var key in fnObject){
-                if(typeof(fnObject[key]) === 'function'){
-                    fnObject[key] = _wrapFunction(fnObject, scope || fnObject);
+            for (var key in fnObject) {
+                if (typeof(fnObject[key]) === 'function') {
+                    fnObject[key] = _wrapFunction(fnObject[key], scope || fnObject);
                 }
             }
             return fnObject;
         } else if (type === 'function' && fnObject.prototype.isReactComponent) {
             // 可能是真正的函数或者是class, ES6的class type也是function，如果含有
             return _defineReact(fnObject);
-        } else if(type === 'function'){
+        } else if (type === 'function') {
             // 可能是真正的函数或者是class, ES6的class type也是function
             return _wrapFunction(fnObject, scope || fnObject);
         } else {
-            return noop;
+            return function() {
+
+            };
         }
     }
 
@@ -82,12 +85,12 @@
      * @param  {[type]} Component [description]
      * @return {[type]}           [description]
      */
-    function _defineReact(Component){
+    function _defineReact(Component) {
 
         var proto = Component.prototype;
 
-        for(var key in proto){
-            if(typeof(proto[key]) === 'function'){
+        for (var key in proto) {
+            if (typeof(proto[key]) === 'function') {
                 proto[key] = _wrapFunction(proto[key]);
             }
         }
@@ -99,19 +102,19 @@
     function _wrapFunction(fn, scope) {
         // 如果fn是个函数，则直接放到try-catch中运行，否则要将类的方法包裹起来
 
-        if(!fn){
-            return function(){};
+        if (typeof(fn) !== 'function') {
+            return function() {};
         }
-    
-        return function(){
+
+        return function() {
             var self = this;
             try {
                 return fn.apply(this, arguments);
-            } catch(e) {
+            } catch (e) {
                 _errorProcess(e);
-                return ;
+                return;
             }
-        }
+        };
     }
 
     /**
@@ -123,14 +126,14 @@
 
         var isTrueFunction = false;
 
-        try{
+        try {
             isTrueFunction = fn.prototype.constructor.arguments === null;
-        }catch(e){
+        } catch (e) {
             isTrueFunction = false;
         }
 
-        for(var key in fn.prototype){
-            return isTrueFunction = false;
+        for (var key in fn.prototype) {
+            return false;
         }
 
         return isTrueFunction;
@@ -142,7 +145,7 @@
         var _newFn = _wrapFunction(scope[fnName]) || function() {};
 
         if (typeof(scope[fnName]) !== 'function') {
-            return function(){ };
+            return function() {};
         }
 
         if (['__def', 'require', 'define'].indexOf(fnName) >= 0) {
@@ -181,7 +184,7 @@
         console.log('错误信息' + e.message);
         console.log('错误堆栈' + e.stack);
 
-        if(__WPO && __WPO.error){
+        if (__WPO && __WPO.error) {
             setTimeout(function() {
                 __WPO.error(e.name, e.message + e.stack);
             }, 5000);
@@ -199,9 +202,22 @@
     //     //     __WPO && __WPO.error(e.name, e.message + e.stack);
     //     // }, 5000);
     // }
-    
+
     window.defineError = defineError;
     window.defineReact = _defineReact;
     window.Tryjs = Tryjs;
     return Tryjs;
 });
+
+var A = {
+    init: function(){
+        var a = {};
+        console.log(a.b.c);
+    }
+};
+
+defineError(A);
+
+A.init();
+
+
