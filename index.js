@@ -19,7 +19,6 @@
 })(window, function() {
 
     var _errorProcess = _reportError,
-        __WPO,
         Tryjs = Tryjs || {
             defineError: defineError,
             report: _reportError,
@@ -180,14 +179,14 @@
     function _reportError(e, opt) {
         opt = {};
 
-        console.log('错误类型' + e.name);
-        console.log('错误信息' + e.message);
-        console.log('错误堆栈' + e.stack);
+        console.log('错误类型:' + e.name);
+        console.log('错误信息:' + e.message);
+        console.log('错误堆栈:' + e.stack);
 
         if (__WPO && __WPO.error) {
             setTimeout(function() {
                 __WPO.error(e.name, e.message + e.stack);
-            }, 5000);
+            }, 2000);
         }
     }
 
@@ -208,16 +207,4 @@
     window.Tryjs = Tryjs;
     return Tryjs;
 });
-
-var A = {
-    init: function(){
-        var a = {};
-        console.log(a.b.c);
-    }
-};
-
-defineError(A);
-
-A.init();
-
 

@@ -24,10 +24,10 @@ function _wrapFunction(fn) {
 &emsp;&emsp;在引入加载器后引入tryjs
 
 ```html
-<script type="://domain.com/path/loader.js"></script>
+<script src="https://b.alicdn.com/@sys/loader/1.x/mloader.js"></script>
+<script src="https://b.alicdn.com/@alife/tryjs/1.x/index.js"></script>
 <script type="://domain.com/path/react.js"></script>
 <script type="://domain.com/path/react-dom.js"></script>
-<script type="://domain.com/path/tryjs.js"></script>
 <script>
 
 	// 添加常用模块化错误捕获和错误处理
