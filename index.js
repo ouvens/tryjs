@@ -106,7 +106,6 @@
         }
 
         return function() {
-            var self = this;
             try {
                 return fn.apply(this, arguments);
             } catch (e) {
