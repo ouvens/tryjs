@@ -180,8 +180,9 @@
     }
 
     // 默认处理方法使用__WPO上报错误信息，自己也可以重定义
-    function _reportError(e, opt) {
-        opt = {};
+    function _reportError(e) {
+        
+        var __WPO = __WPO || {};
 
         console.log('错误类型:' + e.name);
         console.log('错误信息:' + e.message);
