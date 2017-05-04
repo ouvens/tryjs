@@ -88,11 +88,10 @@
 
         var proto = Component.prototype;
 
-        // 封装本身constructor中的构造方法
-        Component = _wrapFunction(Component);
-        
-        // 注意constuctor不能忽略了
-        proto.constructor = _wrapFunction(proto.constructor);
+        // 封装本身constructor中的构造方法，React组件编译为ES5后是一个构造函数，ES6下面为class
+        if(_isTrueFunction(Component)){
+            Component = _wrapFunction(Component);
+        }
 
         for (var key in proto) {
             if (typeof(proto[key]) === 'function') {
