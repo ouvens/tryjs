@@ -88,6 +88,12 @@
 
         var proto = Component.prototype;
 
+        // 封装本身constructor中的构造方法
+        Component = _wrapFunction(Component);
+        
+        // 注意constuctor不能忽略了
+        proto.constructor = _wrapFunction(proto.constructor);
+
         for (var key in proto) {
             if (typeof(proto[key]) === 'function') {
                 proto[key] = _wrapFunction(proto[key]);
