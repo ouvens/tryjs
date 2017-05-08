@@ -20,25 +20,26 @@
 
     var _errorProcess = _reportError,
         Tryjs = Tryjs || {
-            defineError: defineError,
-            report: _reportError,
-            init: function(options) {
+        defineError: defineError,
+        report: _reportError,
+        init: function init(options) {
 
-                // 融合全局方法定义
-                var defaultFnArray = ['__def', '__WPO', 'require', 'define', 'setTimeout', 'setInterval'],
-                    i, length,
-                    fnObject = (options && options.fnObject) || [];
+            // 融合全局方法定义
+            var defaultFnArray = ['__def', '__WPO', 'require', 'define', 'setTimeout', 'setInterval'],
+                i,
+                length,
+                fnObject = options && options.fnObject || [];
 
-                for (i = 0, length = fnObject.length; fnObject.length && (i < length) && (defaultFnArray.indexOf(fnObject[i]) < 0); i++) {
+            for (i = 0, length = fnObject.length; fnObject.length && i < length && defaultFnArray.indexOf(fnObject[i]) < 0; i++) {
 
-                    defaultFnArray.push(fnObject[i]);
-                }
-
-                _errorProcess = (options && options.error) || _reportError;
-                // 定义初始化函数方法
-                defineError(defaultFnArray, window);
+                defaultFnArray.push(fnObject[i]);
             }
-        };
+
+            _errorProcess = options && options.error || _reportError;
+            // 定义初始化函数方法
+            defineError(defaultFnArray, window);
+        }
+    };
     /**
      * 注入错误入口封装，定义哪些注入方法可以被try...catch
      * @param  {[type]} fnObject [函数方法数组或单个函数方法名称;当为函数方法名时，执行返回内容带try...catch的函数]
@@ -49,7 +50,8 @@
     function defineError(fnObject, scope) {
 
         var type = Object.prototype.toString.call(fnObject).slice(8, -1).toLowerCase(),
-            i, length;
+            i,
+            length;
 
         if (type === 'array') {
             for (i = 0, length = fnObject.length; i < length; i++) {
@@ -59,9 +61,9 @@
         } else if (type === 'string') {
             return _wrapFunction(scope[fnObject]);
         } else if (type === 'object') {
-            //  对于对象，则包裹它的方法属性，主要针对react的方法实现，需要重新定义原有方法
+            //  对于对象，则包裹它的方法属性，主要针对react的方法实现，需要重新定义原有方法
             for (var key in fnObject) {
-                if (typeof(fnObject[key]) === 'function') {
+                if (typeof fnObject[key] === 'function') {
                     fnObject[key] = _wrapFunction(fnObject[key], scope || fnObject);
                 }
             }
@@ -73,9 +75,7 @@
             // 可能是真正的函数或者是class, ES6的class type也是function
             return _wrapFunction(fnObject, scope || fnObject);
         } else {
-            return function() {
-
-            };
+            return function () {};
         }
     }
 
@@ -89,12 +89,12 @@
         var proto = Component.prototype;
 
         // 封装本身constructor中的构造方法，React组件编译为ES5后是一个构造函数，ES6下面为class
-        if(_isTrueFunction(Component)){
+        if (_isTrueFunction(Component)) {
             Component = _wrapFunction(Component);
         }
 
         for (var key in proto) {
-            if (typeof(proto[key]) === 'function') {
+            if (typeof proto[key] === 'function') {
                 proto[key] = _wrapFunction(proto[key]);
             }
         }
@@ -106,11 +106,11 @@
     function _wrapFunction(fn, scope) {
         // 如果fn是个函数，则直接放到try-catch中运行，否则要将类的方法包裹起来
 
-        if (typeof(fn) !== 'function') {
-            return function() {};
+        if (typeof fn !== 'function') {
+            return function () {};
         }
 
-        return function() {
+        return function () {
             try {
                 return fn.apply(this, arguments);
             } catch (e) {
@@ -145,30 +145,30 @@
     // 包裹scope作用域下的属性函数，对通用入口函数内容包裹后运行
     function _wrapFunctionArray(fnName, scope) {
 
-        var _newFn = _wrapFunction(scope[fnName]) || function() {};
+        var _newFn = _wrapFunction(scope[fnName]) || function () {};
 
-        if (typeof(scope[fnName]) !== 'function') {
-            return function() {};
+        if (typeof scope[fnName] !== 'function') {
+            return function () {};
         }
 
         if (['__def', 'require', 'define'].indexOf(fnName) >= 0) {
 
-            scope[fnName] = function(id, deps, factory) {
+            scope[fnName] = function (id, deps, factory) {
 
-                if (typeof(factory) !== 'function' || !factory) {
+                if (typeof factory !== 'function' || !factory) {
                     return _newFn(id, deps);
                 } else {
                     return _newFn(id, deps, _wrapFunction(factory));
                 }
             };
         } else if (['setInterval', 'setTimeout'].indexOf(fnName) >= 0) {
-            scope[fnName] = function(fn, time) {
-                // ES6 的语法
+            scope[fnName] = function (fn, time) {
+                // ES6 的语法
                 return _newFn(_wrapFunction(fn), time);
             };
         } else if (['on'].indexOf(fnName) >= 0) {
-            scope[fnName] = function(eventName, subElem, fn) {
-                if (typeof(fn) !== 'function' || !fn) {
+            scope[fnName] = function (eventName, subElem, fn) {
+                if (typeof fn !== 'function' || !fn) {
                     return _newFn(eventName, _wrapFunction(fn));
                 } else {
                     return _newFn(eventName, subElem, _wrapFunction(fn));
@@ -181,18 +181,17 @@
 
     // 默认处理方法使用__WPO上报错误信息，自己也可以重定义
     function _reportError(e) {
-        
-        var __WPO = __WPO || {};
 
-        console.log('错误类型:' + e.name);
-        console.log('错误信息:' + e.message);
-        console.log('错误堆栈:' + e.stack);
+        // console.log('错误类型:' + e.name);
+        // console.log('错误信息:' + e.message);
+        // console.log('错误堆栈:' + e.stack);
 
-        if (__WPO && __WPO.error) {
-            setTimeout(function() {
+        setTimeout(function () {
+            if (__WPO && __WPO.error) {
+                var __WPO = __WPO || {};
                 __WPO.error(e.name, e.message + e.stack);
-            }, 2000);
-        }
+            }
+        }, 2000);
     }
 
     // error的错误上报
@@ -208,8 +207,6 @@
     // }
 
     window.defineError = defineError;
-    window.defineReact = _defineReact;
     window.Tryjs = Tryjs;
     return Tryjs;
 });
-

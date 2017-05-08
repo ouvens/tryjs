@@ -1,6 +1,6 @@
 {
-  "name": "@alife/tryjs",
-  "version": "1.0.6",
+  "name": "@alife/bc-tryjs",
+  "version": "1.0.14",
   "description": "\"try...catch捕获js运行错误\"",
   "main": "index.js",
   "scripts": {
