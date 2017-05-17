@@ -76,6 +76,20 @@ class MyComponent extends React.Component {
 exports default defineError(MyComponent);
 ```
 
+&emsp;&emsp;或者使用decorator:
+
+```javascript
+
+@defineError
+class MyComponent extends React.Component {
+    render() {
+        return <div>render something here</div>;
+    }
+}
+
+exports default MyComponent;
+```
+
 ##### 使用方法四：
 
 &emsp;&emsp;对于对象或单个函数中的内容包裹运行。
