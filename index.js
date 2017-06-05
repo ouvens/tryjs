@@ -187,11 +187,9 @@
         // console.log('错误堆栈:' + e.stack);
 
         setTimeout(function () {
-            if (__WPO && __WPO.error) {
-                var __WPO = __WPO || {};
-                __WPO.error(e.name, e.message + e.stack);
-            }
-        }, 2000);
+            var report = window.__WPO || {};
+            report.error && report.error(e.name, e.message + e.stack);
+        }, 500);
     }
 
     // error的错误上报
