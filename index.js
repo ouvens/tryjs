@@ -4,7 +4,7 @@
  * descrption: 获取JS运行错误的具体信息
  */
 
-(function(root, factory) {
+(function (root, factory) {
     'use strict';
     if (typeof define === 'function' && define.amd) {
         // AMD
@@ -16,30 +16,38 @@
         // 浏览器全局变量(root 即 window)
         root.Tryjs = factory();
     }
-})(window, function() {
+})(window, function () {
 
+    var config = {
+        id: '',
+        reportUrl: '',
+        random: '',
+    };
     var _errorProcess = _reportError,
         Tryjs = Tryjs || {
-        defineError: defineError,
-        report: _reportError,
-        init: function init(options) {
+            defineError: defineError,
+            report: _reportError,
+            init: function init(options) {
 
-            // 融合全局方法定义
-            var defaultFnArray = ['__def', '__WPO', 'require', 'define', 'setTimeout', 'setInterval'],
-                i,
-                length,
-                fnObject = options && options.fnObject || [];
+                // 融合全局方法定义
+                var defaultFnArray = ['require', 'define', 'setTimeout', 'setInterval'],
+                    i,
+                    length,
+                    fnObject = options && options.fnObject || [];
 
-            for (i = 0, length = fnObject.length; fnObject.length && i < length && defaultFnArray.indexOf(fnObject[i]) < 0; i++) {
+                for (i = 0, length = fnObject.length; fnObject.length && i < length && defaultFnArray.indexOf(fnObject[i]) < 0; i++) {
+                    defaultFnArray.push(fnObject[i]);
+                }
 
-                defaultFnArray.push(fnObject[i]);
+                config.id = options.id || config.id;
+                config.reportUrl = options.reportUrl || config.reportUrl;
+                config.random = options.random || 1;
+
+                _errorProcess = options && options.error || _reportError;
+                // 定义初始化函数方法
+                defineError(defaultFnArray, window);
             }
-
-            _errorProcess = options && options.error || _reportError;
-            // 定义初始化函数方法
-            defineError(defaultFnArray, window);
-        }
-    };
+        };
     /**
      * 注入错误入口封装，定义哪些注入方法可以被try...catch
      * @param  {[type]} fnObject [函数方法数组或单个函数方法名称;当为函数方法名时，执行返回内容带try...catch的函数]
@@ -75,7 +83,7 @@
             // 可能是真正的函数或者是class, ES6的class type也是function
             return _wrapFunction(fnObject, scope || fnObject);
         } else {
-            return function () {};
+            return function () { };
         }
     }
 
@@ -107,7 +115,7 @@
         // 如果fn是个函数，则直接放到try-catch中运行，否则要将类的方法包裹起来
 
         if (typeof fn !== 'function') {
-            return function () {};
+            return function () { };
         }
 
         return function () {
@@ -145,13 +153,13 @@
     // 包裹scope作用域下的属性函数，对通用入口函数内容包裹后运行
     function _wrapFunctionArray(fnName, scope) {
 
-        var _newFn = _wrapFunction(scope[fnName]) || function () {};
+        var _newFn = _wrapFunction(scope[fnName]) || function () { };
 
         if (typeof scope[fnName] !== 'function') {
-            return function () {};
+            return function () { };
         }
 
-        if (['__def', 'require', 'define'].indexOf(fnName) >= 0) {
+        if (['require', 'define'].indexOf(fnName) >= 0) {
 
             scope[fnName] = function (id, deps, factory) {
 
@@ -187,22 +195,28 @@
         // console.log('错误堆栈:' + e.stack);
 
         setTimeout(function () {
-            var report = window.__WPO || {};
-            report.error && report.error(e.name, e.message + e.stack);
+            _reportServer(e.name, e.message + e.stack, window.location.href);
         }, 500);
     }
 
-    // error的错误上报
-    // window.onerror = function(msg, file, row, column, errorObj) {
-    //     console.log(msg); // script error.
-    //     console.log(file); // 
-    //     console.log(row); // 0
-    //     console.log(column); // 0
-    //     console.log(errorObj); // {}
-    //     // setTimeout(function() {
-    //     //     __WPO && __WPO.error(e.name, e.message + e.stack);
-    //     // }, 5000);
-    // }
+    // 上报错误信息到服务器
+    function _reportServer(type, msg, url) {
+        if (Math.random() < config.random) {
+            (new Image()).src = 'http://report.com/error/report?type=' + type + '&msg=' + msg + '&url=' + url;
+        }
+    }
+
+    // window.onerror的错误上报
+    window.onerror = function (msg, file, row, column, errorObj) {
+        console.log(msg); // script error.
+        console.log(file); // 
+        console.log(row); // 0
+        console.log(column); // 0
+        console.log(errorObj); // {}
+        setTimeout(function () {
+            _reportServer(msg, JSON.stringify(errorObj) + '@row:' + row + 'column: ' + column, file);
+        }, 500);
+    }
 
     window.defineError = defineError;
     window.Tryjs = Tryjs;
