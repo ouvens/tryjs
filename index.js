@@ -202,7 +202,19 @@
     // 上报错误信息到服务器
     function _reportServer(type, msg, url) {
         if (Math.random() < config.random) {
-            (new Image()).src = 'http://report.com/error/report?type=' + type + '&msg=' + msg + '&url=' + url;
+            var logid = "log_" + (newDate()).getTime();
+            var img = window[logid] = new Image();  //把new Image()赋给一个全局变量长期持有
+            
+            // 上报成功或失败都清空持有的变量
+            img.onload = img.onerror = function () {
+                window[logid] = null; 
+            };
+
+            img.src = 'http://report.com/error/report?type=' + type + '&msg=' + msg + '&url=' + url;
+            img = null;      //释放局部变量c
+
+            // 这里不用下面直接的上报方法是因为 new Image没有被赋值，会被系统回收，导致请求不被发送
+            // (new Image()).src = 'http://report.com/error/report?type=' + type + '&msg=' + msg + '&url=' + url;
         }
     }
 
