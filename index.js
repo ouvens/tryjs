@@ -19,9 +19,23 @@
 })(window, function () {
 
     var config = {
-        id: '',
-        reportUrl: '',
-        random: '',
+        id: 0,  // 业务id
+        uin: 0, // user id
+        reportUrl: '', // 上报地址接口
+
+        offline_url: "", // 离线日志上报 接口
+        offline_auto_url: "", // 检测是否自动上报
+        ext: null, // 扩展参数 用于自定义上报
+        level: 4, // 错误级别 1-debug 2-info 4-error
+
+        ignore: [], // 忽略某个错误, 支持 Regexp
+        random: 1, // 抽样 (0-1] 1-全量
+        delay: 1000, // 延迟上报 combo 为 true 时有效
+        submit: null, // 自定义上报方式
+        // repeat: 2 , // 重复上报次数(对于同一个错误超过多少次不上报),
+        // offlineLog : true,
+        // offlineLogExp : 5,  // 离线日志过期时间 ， 默认5天
+        // offlineLogAuto : false,  //是否自动询问服务器需要自动上报
     };
     var _errorProcess = _reportError,
         Tryjs = Tryjs || {
@@ -194,6 +208,19 @@
         // console.log('错误信息:' + e.message);
         // console.log('错误堆栈:' + e.stack);
 
+        // 根据概率上报
+        var randomIgnore = Math.random() >= config.random;
+        if (randomIgnore) {
+            return;
+        }
+
+        // 如果匹配到忽略的正则式，则终止上报
+        for (var i = 0; i < config.ignore; i++) {
+            if(config.ignorep[i].test(e.message)){
+                return;
+            }
+        }
+
         setTimeout(function () {
             _reportServer(e.name, e.message + e.stack, window.location.href);
         }, 500);
@@ -204,16 +231,16 @@
         if (Math.random() < config.random) {
             var logid = "log_" + (newDate()).getTime();
             var img = window[logid] = new Image();  //把new Image()赋给一个全局变量长期持有
-            
+
             // 上报成功或失败都清空持有的变量
             img.onload = img.onerror = function () {
-                window[logid] = null; 
+                window[logid] = null;
             };
 
             img.src = 'http://report.com/error/report?type=' + type + '&msg=' + msg + '&url=' + url;
             img = null;      //释放局部变量c
 
-            // 这里不用下面直接的上报方法是因为 new Image没有被赋值，会被系统回收，导致请求不被发送
+            // 这里不用下面直接的上报方法是因为new Image没有被赋值，会被系统回收，导致请求不被发送
             // (new Image()).src = 'http://report.com/error/report?type=' + type + '&msg=' + msg + '&url=' + url;
         }
     }
