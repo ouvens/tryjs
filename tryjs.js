@@ -424,9 +424,9 @@
         file = file || window.location.href;
 
         // 如果是资源加载异常
-        if (msg.type) {
+        if (msg && msg.type) {
             setTimeout(function () {
-                _reportServer('Resource load ' + msg.type, 'Resource load ' + msg.type + ' @' +msg.target.tagName + ': ' + msg.target.outerHTML, file, row, col);
+                _reportServer('Resource load ' + msg.type, 'Resource load ' + msg.type + ' @' + (msg.target && msg.target.tagName) + ': ' + (msg.target && msg.target.outerHTML), file, row, col);
             }, config.delay);
         } else {
             // js异常

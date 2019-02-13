@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    
+    <script src="kjsdf22.js"></script>
+    <script>
+            /**
+     * window.onerror的错误上报，try-catch会跳过并上报过程中遇到的问题，之外的问题则由onerror全局捕获
+     * 
+     * @param {any} msg 错误信息
+     * @param {any} file 文件路径
+     * @param {any} row 行数
+     * @param {any} col 列数
+     * @param {any} errorObj 错误对象，兼容safari浏览器
+     */
+    if (window.attachEvent) {
+        window.attachEvent('error', _onErrorHandler, true);
+    } else {
+        window.addEventListener('error', _onErrorHandler, true);
+    }
+    /**
+     * 处理全局onerror上报
+     * 
+     * @param {any} msg 
+     * @param {any} file 
+     * @param {any} row 
+     * @param {any} col 
+     * @param {any} errorObj 
+     */
+     function _onErrorHandler(msg, file, row, col, errorObj) {
+        file = file || window.location.href;
+
+        // 如果是资源加载异常
+        if (msg.type) {
+            console.log(msg)
+            console.log('Resource load ' + msg.type + ' @' +msg.target.tagName + ': ' + msg.target.outerHTML)
+            setTimeout(function () {
+                // _reportServer('Resource load ' + msg.type, 'Resource load ' + msg.type + ' @' +msg.target.tagName + ': ' + msg.target.outerHTML, file, row, col);
+            }, 0);
+        } else {
+            console.log((errorObj ? JSON.stringify(errorObj) : '' || msg), msg);
+            // js异常
+            setTimeout(function () {
+                // _reportServer((errorObj ? JSON.stringify(errorObj) : '' || msg), msg, file, row, col);
+            }, 0);
+        }
+    }
+    </script>
+    <img src="https://baidu.com/a.png" />
+    <script src="main.js"></script>
+    <script>
+        var script = document.createElement('script');
+        script.src='http://www.baidu.com/sfdsdf.js';
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>
